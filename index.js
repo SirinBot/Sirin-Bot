@@ -10,6 +10,20 @@ const {
   PermissionsBitField,
 } = require('discord.js');
 
+// ---------- HARD SAFETY (prevents crash loops) ----------
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+// Token guard (THIS fixes your “invalid header” crash)
+if (!process.env.TOKEN || typeof process.env.TOKEN !== 'string' || process.env.TOKEN.trim().length < 20) {
+  console.error('❌ TOKEN is missing/invalid. Set TOKEN in Railway Variables (ALL CAPS).');
+  process.exit(1);
+}
+
 const CONFIG_PATH = path.join(__dirname, 'rrpanels.json');
 
 // ---------- CONFIG LOAD/SAVE ----------
@@ -39,7 +53,6 @@ function loadConfig() {
     const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
     return JSON.parse(raw);
   } catch (e) {
-    // If JSON is broken, back it up and recreate
     const badPath = path.join(__dirname, `rrpanels.bad-${Date.now()}.json`);
     fs.copyFileSync(CONFIG_PATH, badPath);
     const cfg = defaultConfig();
@@ -57,10 +70,10 @@ function saveConfig(cfg) {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,          // needed to add/remove roles
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,        // for !setup command
-    GatewayIntentBits.GuildMessageReactions, // IMPORTANT: reaction events
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
   partials: [
     Partials.Message,
@@ -83,7 +96,7 @@ const PANELS = [
       { label: '18-21', roleId: '1263212381387886745', emojiId: '1263442021197287455' },
       { label: '22-25', roleId: '1263212443258323040', emojiId: '1263369965931593753' },
       { label: '26-30', roleId: '1263212568735121520', emojiId: '1263443748189110353' },
-      { label: '31+',   roleId: '1263212744812003379', emojiId: '1456838594806288394' }, // NEW STATIC EMOJI
+      { label: '31+',   roleId: '1263212744812003379', emojiId: '1456838594806288394' }, // static
     ],
   },
   {
@@ -112,14 +125,14 @@ const PANELS = [
       { label: 'Genderfluid', roleId: '1304973887901008035', emojiId: '1456870851898118287' },
       { label: 'Trans Man',   roleId: '1305333687172337880', emojiId: '1456870908558970931' },
       { label: 'Trans Woman', roleId: '1328635056394207284', emojiId: '1456870973705027787' },
-      { label: 'Femboy',      roleId: '1304973954389377024', emojiId: '1456824792693870718' }, // animated OK
+      { label: 'Femboy',      roleId: '1304973954389377024', emojiId: '1456824792693870718' }, // animated ok
     ],
   },
   {
     key: 'sexuality',
     title: 'Sexuality roles!',
     description: 'React to give yourself a role.',
-    exclusive: false, // let people pick multiple if they want
+    exclusive: false,
     items: [
       { label: 'Straight',   roleId: '1262758197345648700', emojiId: '1456878853468197072' },
       { label: 'Gay',        roleId: '1266495777547751535', emojiId: '1456880652149461004' },
@@ -138,9 +151,9 @@ const PANELS = [
     description: 'React to give yourself a role.',
     exclusive: true,
     items: [
-      { label: "Dm's Open",  roleId: '1263216868051779666', emojiId: '1456884937666859141' },
-      { label: 'Ask to DM',  roleId: '1263216913757114458', emojiId: '1456885432162979953' },
-      { label: "Closed DM's", roleId: '1263216991229972533', emojiId: '1456885156823564309' },
+      { label: "Dm's Open",    roleId: '1263216868051779666', emojiId: '1456884937666859141' },
+      { label: 'Ask to DM',    roleId: '1263216913757114458', emojiId: '1456885432162979953' },
+      { label: "Closed DM's",  roleId: '1263216991229972533', emojiId: '1456885156823564309' },
     ],
   },
   {
@@ -169,10 +182,18 @@ const PANELS = [
   },
 ];
 
-// ---------- HELPERS ----------
+// ---------- EMOJI HELPERS (fixes :emoji_123: showing) ----------
+function getEmojiMarkupById(emojiId) {
+  const e = client.emojis.cache.get(String(emojiId));
+  if (!e) return null;
+  // e.animated tells us if it is <a:...:id>
+  return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
+}
+
+// If cache misses, still show a usable placeholder in the message
 function emojiToString(emojiId) {
-  const e = client.emojis.cache.get(emojiId);
-  return e ? e.toString() : '❔';
+  const markup = getEmojiMarkupById(emojiId);
+  return markup ?? '❔';
 }
 
 function panelText(panel) {
@@ -182,15 +203,15 @@ function panelText(panel) {
 
 function findPanelByMessageId(messageId) {
   for (const p of PANELS) {
-    if (cfg.messages?.[p.key] && cfg.messages[p.key] === messageId) return p;
+    if (cfg.messages?.[p.key] && String(cfg.messages[p.key]) === String(messageId)) return p;
   }
   return null;
 }
 
 function findItemByEmoji(panel, reactionEmoji) {
-  const emojiId = reactionEmoji?.id; // custom emoji => id
+  const emojiId = reactionEmoji?.id;
   if (!emojiId) return null;
-  return panel.items.find(i => i.emojiId === emojiId) || null;
+  return panel.items.find(i => String(i.emojiId) === String(emojiId)) || null;
 }
 
 async function ensureBotCanManage(guild) {
@@ -200,24 +221,22 @@ async function ensureBotCanManage(guild) {
   }
 }
 
-async function ensurePanel(channel, guild, panel) {
+async function ensurePanel(channel, panel) {
   const desired = panelText(panel);
 
   let msgId = cfg.messages?.[panel.key];
   let msg = null;
 
-  // Try fetch existing message if we have an ID
-  if (msgId && msgId.trim().length > 0) {
+  if (msgId && String(msgId).trim().length > 0) {
     try {
-      msg = await channel.messages.fetch(msgId);
-    } catch (e) {
-      // Unknown message => recreate
+      msg = await channel.messages.fetch(String(msgId));
+    } catch {
       msg = null;
       cfg.messages[panel.key] = "";
     }
   }
 
-  // If message exists but isn't authored by this bot, we cannot edit it -> make a new one
+  // If message exists but isn't authored by this bot, we cannot edit it
   if (msg && msg.author?.id !== client.user.id) {
     msg = null;
     cfg.messages[panel.key] = "";
@@ -229,19 +248,17 @@ async function ensurePanel(channel, guild, panel) {
     cfg.messages[panel.key] = msg.id;
     saveConfig(cfg);
     console.log(`Posted ${panel.key} panel -> ${msg.id}`);
-  } else {
-    // Edit to keep it updated
-    if (msg.content !== desired) {
-      await msg.edit({ content: desired });
-      console.log(`Updated ${panel.key} panel`);
-    }
+  } else if (msg.content !== desired) {
+    await msg.edit({ content: desired });
+    console.log(`Updated ${panel.key} panel`);
   }
 
-  // Add reactions (won't duplicate)
+  // Add reactions
   for (const item of panel.items) {
     try {
-      const emojiObj = client.emojis.cache.get(item.emojiId);
-      await msg.react(emojiObj ?? item.emojiId);
+      const emojiObj = client.emojis.cache.get(String(item.emojiId));
+      // react() accepts emoji object OR string ID for custom emoji
+      await msg.react(emojiObj ?? String(item.emojiId));
     } catch (e) {
       console.log(`Could not react with emoji ${item.emojiId} for ${panel.key}:`, e?.message ?? e);
     }
@@ -257,16 +274,15 @@ async function refreshAllPanels() {
   const channel = await guild.channels.fetch(cfg.channelId);
   if (!channel || !channel.isTextBased()) throw new Error('Configured channelId is not a text channel.');
 
-  // Ensure all panels exist + updated, in order (Age first)
   for (const panel of PANELS) {
-    await ensurePanel(channel, guild, panel);
+    await ensurePanel(channel, panel);
   }
 
   saveConfig(cfg);
   console.log('Panels refreshed ✅');
 }
 
-// ---------- COMMAND: !setup (or /setup typed as text) ----------
+// ---------- COMMAND: !setup ----------
 client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   if (message.guild?.id !== cfg.guildId) return;
@@ -298,8 +314,7 @@ async function handleReactionToggle(reaction, user, adding) {
     return;
   }
 
-  const messageId = reaction.message.id;
-  const panel = findPanelByMessageId(messageId);
+  const panel = findPanelByMessageId(reaction.message.id);
   if (!panel) return;
 
   const item = findItemByEmoji(panel, reaction.emoji);
@@ -310,12 +325,9 @@ async function handleReactionToggle(reaction, user, adding) {
 
   const member = await guild.members.fetch(user.id);
 
-  // Exclusive panels: remove other roles in that panel when adding a new one
+  // Exclusive: remove other roles in that panel
   if (adding && panel.exclusive) {
-    const otherRoleIds = panel.items
-      .map(i => i.roleId)
-      .filter(rid => rid !== item.roleId);
-
+    const otherRoleIds = panel.items.map(i => i.roleId).filter(rid => rid !== item.roleId);
     for (const rid of otherRoleIds) {
       if (member.roles.cache.has(rid)) {
         await member.roles.remove(rid).catch(() => {});
@@ -325,12 +337,12 @@ async function handleReactionToggle(reaction, user, adding) {
 
   if (adding) {
     if (!member.roles.cache.has(item.roleId)) {
-      await member.roles.add(item.roleId);
+      await member.roles.add(item.roleId).catch(() => {});
       console.log(`+ ${user.tag} -> ${item.label}`);
     }
   } else {
     if (member.roles.cache.has(item.roleId)) {
-      await member.roles.remove(item.roleId);
+      await member.roles.remove(item.roleId).catch(() => {});
       console.log(`- ${user.tag} -> ${item.label}`);
     }
   }
@@ -347,7 +359,6 @@ client.on(Events.MessageReactionRemove, (reaction, user) => {
 // ---------- READY ----------
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}`);
-  // Startup refresh (won't crash if something is wrong)
   try {
     await refreshAllPanels();
   } catch (e) {
@@ -355,5 +366,7 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN.trim());
+
+
 
