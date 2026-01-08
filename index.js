@@ -25,12 +25,12 @@ function defaultConfig() {
     rrChannelId: "1250450644926464030",
     colourChannelId: "1272601527164600403",
     messages: {
-      age: "",
-      location: "",
-      gender: "",
-      sexuality: "",
-      dmstatus: "",
-      power: "",
+      age: "1456859415843045497",
+      location: "1456876189359669259",
+      gender: "1456864506515820689",
+      sexuality: "1456876128017977405",
+      dmstatus: "1456888550288003244",
+      power: "1456896005571088529",
       pings: "",
       colourMenu1: "",
       colourMenu2: "",
@@ -45,7 +45,24 @@ function loadConfig() {
     return cfg;
   }
   try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+
+    // Migration: old key channelId -> rrChannelId (just in case)
+    if (!cfg.rrChannelId && cfg.channelId) cfg.rrChannelId = cfg.channelId;
+
+    // Fill missing fields
+    const d = defaultConfig();
+    if (!cfg.guildId) cfg.guildId = d.guildId;
+    if (!cfg.rrChannelId) cfg.rrChannelId = d.rrChannelId;
+    if (!cfg.colourChannelId) cfg.colourChannelId = d.colourChannelId;
+    if (!cfg.messages) cfg.messages = d.messages;
+
+    for (const k of Object.keys(d.messages)) {
+      if (typeof cfg.messages[k] !== "string") cfg.messages[k] = d.messages[k] || "";
+    }
+
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf8");
+    return cfg;
   } catch (e) {
     const badPath = path.join(__dirname, `rrpanels.bad-${Date.now()}.json`);
     fs.copyFileSync(CONFIG_PATH, badPath);
@@ -71,12 +88,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,         // for !setup
     GatewayIntentBits.GuildMessageReactions,  // reactions
   ],
-  partials: [
-    Partials.Message,
-    Partials.Channel,
-    Partials.Reaction,
-    Partials.User,
-  ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
 });
 
 // ---------------- PANELS (RR CHANNEL) ----------------
@@ -263,7 +275,6 @@ async function ensurePanel(channel, panel) {
 
   let msg = await fetchOrNull(channel, cfg.messages?.[panel.key]);
 
-  // Can't edit other people's messages
   if (msg && msg.author?.id !== client.user.id) {
     msg = null;
     cfg.messages[panel.key] = "";
@@ -281,7 +292,6 @@ async function ensurePanel(channel, panel) {
     }
   }
 
-  // Add reactions (won't duplicate)
   for (const item of panel.items) {
     try {
       const emojiObj = client.emojis.cache.get(item.emojiId);
@@ -309,7 +319,7 @@ async function refreshReactionPanels() {
   console.log("Reaction panels refreshed ✅");
 }
 
-// ---------------- COLOUR DROPDOWNS ----------------
+// ---------------- COLOUR MENUS ----------------
 function buildColourMenu(customId, roles, placeholder) {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(customId)
@@ -354,6 +364,9 @@ async function refreshColourMenus() {
   const colourChannel = await guild.channels.fetch(cfg.colourChannelId);
   if (!safeIsTextChannel(colourChannel)) throw new Error("Colour channel invalid");
 
+  const firstHalf = COLOUR_ROLES.slice(0, 14);
+  const secondHalf = COLOUR_ROLES.slice(14);
+
   const embed1 = new EmbedBuilder()
     .setTitle("Pick your Colour")
     .setDescription("Choose your colour role from the dropdown below.\n(1/2)");
@@ -361,9 +374,6 @@ async function refreshColourMenus() {
   const embed2 = new EmbedBuilder()
     .setTitle("Pick your Colour")
     .setDescription("Choose your colour role from the dropdown below.\n(2/2)");
-
-  const firstHalf = COLOUR_ROLES.slice(0, 14);
-  const secondHalf = COLOUR_ROLES.slice(14);
 
   const row1 = buildColourMenu("colour_menu_1", firstHalf, "Choose your Colour! (1/2)");
   const row2 = buildColourMenu("colour_menu_2", secondHalf, "Choose your Colour! (2/2)");
@@ -411,15 +421,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const chosenRoleId = interaction.values?.[0];
     if (!chosenRoleId) return;
 
-    // Remove all other colour roles first (exclusive colour)
-    const removeIds = COLOUR_ROLE_IDS.filter(id => id !== chosenRoleId);
-    for (const rid of removeIds) {
-      if (member.roles.cache.has(rid)) {
+    // Remove other colour roles first (exclusive)
+    for (const rid of COLOUR_ROLE_IDS) {
+      if (rid !== chosenRoleId && member.roles.cache.has(rid)) {
         await member.roles.remove(rid).catch(() => {});
       }
     }
 
-    // Add chosen
     if (!member.roles.cache.has(chosenRoleId)) {
       await member.roles.add(chosenRoleId);
     }
@@ -459,12 +467,9 @@ async function handleReactionToggle(reaction, user, adding) {
 
   const member = await guild.members.fetch(user.id);
 
-  // Exclusive panels: when adding, remove other roles from that panel
+  // Exclusive panels: remove other roles when adding
   if (adding && panel.exclusive) {
-    const otherRoleIds = panel.items
-      .map(i => i.roleId)
-      .filter(rid => rid !== item.roleId);
-
+    const otherRoleIds = panel.items.map(i => i.roleId).filter(rid => rid !== item.roleId);
     for (const rid of otherRoleIds) {
       if (member.roles.cache.has(rid)) {
         await member.roles.remove(rid).catch(() => {});
@@ -474,11 +479,11 @@ async function handleReactionToggle(reaction, user, adding) {
 
   if (adding) {
     if (!member.roles.cache.has(item.roleId)) {
-      await member.roles.add(item.roleId).catch(() => {});
+      await member.roles.add(item.roleId).catch((e) => console.log("Add role failed:", e?.message ?? e));
     }
   } else {
     if (member.roles.cache.has(item.roleId)) {
-      await member.roles.remove(item.roleId).catch(() => {});
+      await member.roles.remove(item.roleId).catch((e) => console.log("Remove role failed:", e?.message ?? e));
     }
   }
 }
@@ -495,7 +500,14 @@ client.on(Events.MessageReactionRemove, (reaction, user) => {
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  // Startup refresh (won't crash the whole bot)
+  // Presence (helps you see it online)
+  try {
+    client.user.setPresence({
+      status: "online",
+      activities: [{ name: "reaction roles 💜", type: 3 }], // WATCHING
+    });
+  } catch {}
+
   try {
     await refreshReactionPanels();
     await refreshColourMenus();
@@ -504,5 +516,24 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-// ---------------- LOGIN ----------------
-client.login(process.env.TOKEN);
+// ---------------- STABILITY / LOGGING ----------------
+process.on("unhandledRejection", (reason) => console.error("Unhandled Rejection:", reason));
+process.on("uncaughtException", (err) => console.error("Uncaught Exception:", err));
+
+// ---------------- LOGIN (TOKEN FIX) ----------------
+const rawToken = process.env.TOKEN;
+const token = (rawToken || "").trim();
+
+console.log("TOKEN exists?", !!rawToken);
+console.log("TOKEN length:", token.length);
+
+if (!token) {
+  console.error("❌ TOKEN is missing. Set Railway Variable TOKEN (ALL CAPS).");
+  process.exit(1);
+}
+if (/\s/.test(rawToken)) {
+  console.error("❌ TOKEN contains whitespace/newlines. Re-paste it in Railway with no spaces.");
+  process.exit(1);
+}
+
+client.login(token);
