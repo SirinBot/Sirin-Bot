@@ -80,7 +80,6 @@ const client = new Client({
 });
 
 // ---------------- PANELS (RR CHANNEL) ----------------
-// Age first + all your panels
 const PANELS = [
   {
     key: "age",
@@ -177,40 +176,37 @@ const PANELS = [
   },
 ];
 
-// ---------------- COLOUR ROLES (DROPDOWN) ----------------
-// 28 roles, split into 2 menus of 14
-const COLOUR_CHANNEL_ID = cfg.colourChannelId;
-
+// ---------------- COLOUR ROLES (2 DROPDOWNS) ----------------
 const COLOUR_ROLES = [
-  { label: "♰ ✦ Ash Veil ✦ ♰",          roleId: "1271989191772999762" },
-  { label: "♰ ✦ Obsidian ✦ ♰",          roleId: "1271989807610069033" },
-  { label: "♰ ✦ Cinder ✦ ♰",            roleId: "1271990032512581685" },
-  { label: "♰ ✦ Flicker ✦ ♰",           roleId: "1271991428364370030" },
-  { label: "♰ ✦ Hemogoblin ✦ ♰",        roleId: "1271992162816626768" },
-  { label: "♰ ✦ Crimson Shard ✦ ♰",     roleId: "1271992592543780935" },
-  { label: "♰ ✦ Vintner ✦ ♰",           roleId: "1272002406368149524" },
-  { label: "♰ ✦ Ember Kiss ✦ ♰",        roleId: "1272002180622057583" },
-  { label: "♰ ✦ Scorched ✦ ♰",          roleId: "1272001915378470952" },
-  { label: "♰ ✦ Corroded ✦ ♰",          roleId: "1272001805290831902" },
-  { label: "♰ ✦ Circuit ✦ ♰",           roleId: "1309198526495981580" },
-  { label: "♰ ✦ Embercore ✦ ♰",         roleId: "1272001508841623593" },
-  { label: "♰ ✦ Toxic Grove ✦ ♰",       roleId: "1272001227051368540" },
-  { label: "♰ ✦ Venom Lichen ✦ ♰",      roleId: "1272001105160573001" },
+  { label: "♰ ✦ Ash Veil ✦ ♰",        roleId: "1271989191772999762" },
+  { label: "♰ ✦ Obsidian ✦ ♰",        roleId: "1271989807610069033" },
+  { label: "♰ ✦ Cinder ✦ ♰",          roleId: "1271990032512581685" },
+  { label: "♰ ✦ Flicker ✦ ♰",         roleId: "1271991428364370030" },
+  { label: "♰ ✦ Hemogoblin ✦ ♰",      roleId: "1271992162816626768" },
+  { label: "♰ ✦ Crimson Shard ✦ ♰",   roleId: "1271992592543780935" },
+  { label: "♰ ✦ Vintner ✦ ♰",         roleId: "1272002406368149524" },
+  { label: "♰ ✦ Ember Kiss ✦ ♰",      roleId: "1272002180622057583" },
+  { label: "♰ ✦ Scorched ✦ ♰",        roleId: "1272001915378470952" },
+  { label: "♰ ✦ Corroded ✦ ♰",        roleId: "1272001805290831902" },
+  { label: "♰ ✦ Circuit ✦ ♰",         roleId: "1309198526495981580" },
+  { label: "♰ ✦ Embercore ✦ ♰",       roleId: "1272001508841623593" },
+  { label: "♰ ✦ Toxic Grove ✦ ♰",     roleId: "1272001227051368540" },
+  { label: "♰ ✦ Venom Lichen ✦ ♰",    roleId: "1272001105160573001" },
 
-  { label: "♰ ✦ Cyber Jade ✦ ♰",        roleId: "1272000992082264136" },
-  { label: "♰ ✦ Viridian Hex ✦ ♰",      roleId: "1272000883621761047" },
-  { label: "♰ ✦ Neon Rift ✦ ♰",         roleId: "1271994645114781769" },
-  { label: "♰ ✦ Abyssal ✦ ♰",           roleId: "1271994508510236723" },
-  { label: "♰ ✦ Cryo Byte ✦ ♰",         roleId: "1271994090153574494" },
-  { label: "♰ ✦ Byte Wraith ♰ ✦",       roleId: "1271994238795780177" },
-  { label: "♰ ✦ Nullshade ♰ ✦",         roleId: "1271993606240206890" },
-  { label: "♰ ✦ Darknet Fiend ♰ ✦",     roleId: "1271993487591604346" },
-  { label: "♰ ✦ Hellspire ♰ ✦",         roleId: "1271993365302345770" },
-  { label: "♰ ✦ Ether Pulse ♰ ✦",       roleId: "1271993251271934022" },
-  { label: "♰ ✦ Glitch Blossom ♰ ✦",    roleId: "1271993777158098974" },
-  { label: "♰ ✦ Aurora Wraith ♰ ✦",     roleId: "1408855617975615631" },
-  { label: "♰ ✦ Voltage Specter ♰ ✦",   roleId: "1408856244378402887" },
-  { label: "♰ ✦ Cyber Siren ♰ ✦",       roleId: "1408858625560154132" },
+  { label: "♰ ✦ Cyber Jade ✦ ♰",      roleId: "1272000992082264136" },
+  { label: "♰ ✦ Viridian Hex ✦ ♰",    roleId: "1272000883621761047" },
+  { label: "♰ ✦ Neon Rift ✦ ♰",       roleId: "1271994645114781769" },
+  { label: "♰ ✦ Abyssal ✦ ♰",         roleId: "1271994508510236723" },
+  { label: "♰ ✦ Cryo Byte ✦ ♰",       roleId: "1271994090153574494" },
+  { label: "♰ ✦ Byte Wraith ♰ ✦",     roleId: "1271994238795780177" },
+  { label: "♰ ✦ Nullshade ♰ ✦",       roleId: "1271993606240206890" },
+  { label: "♰ ✦ Darknet Fiend ♰ ✦",   roleId: "1271993487591604346" },
+  { label: "♰ ✦ Hellspire ♰ ✦",       roleId: "1271993365302345770" },
+  { label: "♰ ✦ Ether Pulse ♰ ✦",     roleId: "1271993251271934022" },
+  { label: "♰ ✦ Glitch Blossom ♰ ✦",  roleId: "1271993777158098974" },
+  { label: "♰ ✦ Aurora Wraith ♰ ✦",   roleId: "1408855617975615631" },
+  { label: "♰ ✦ Voltage Specter ♰ ✦", roleId: "1408856244378402887" },
+  { label: "♰ ✦ Cyber Siren ♰ ✦",     roleId: "1408858625560154132" },
 ];
 
 const COLOUR_ROLE_IDS = COLOUR_ROLES.map(r => r.roleId);
@@ -240,7 +236,7 @@ function findPanelByMessageId(messageId) {
 }
 
 function findItemByEmoji(panel, reactionEmoji) {
-  const emojiId = reactionEmoji?.id; // only custom emoji
+  const emojiId = reactionEmoji?.id; // custom emoji only
   if (!emojiId) return null;
   return panel.items.find(i => i.emojiId === emojiId) || null;
 }
@@ -252,22 +248,22 @@ async function ensureBotCanManage(guild) {
   }
 }
 
+async function fetchOrNull(channel, messageId) {
+  if (!messageId || !String(messageId).trim()) return null;
+  try {
+    return await channel.messages.fetch(messageId);
+  } catch {
+    return null;
+  }
+}
+
+// ---------------- REACTION PANELS ----------------
 async function ensurePanel(channel, panel) {
   const desired = panelText(panel);
 
-  let msgId = cfg.messages?.[panel.key];
-  let msg = null;
+  let msg = await fetchOrNull(channel, cfg.messages?.[panel.key]);
 
-  if (msgId && msgId.trim()) {
-    try {
-      msg = await channel.messages.fetch(msgId);
-    } catch {
-      msg = null;
-      cfg.messages[panel.key] = "";
-    }
-  }
-
-  // If message exists but not authored by the bot, can't edit -> post new
+  // Can't edit other people's messages
   if (msg && msg.author?.id !== client.user.id) {
     msg = null;
     cfg.messages[panel.key] = "";
@@ -285,7 +281,7 @@ async function ensurePanel(channel, panel) {
     }
   }
 
-  // Add reactions
+  // Add reactions (won't duplicate)
   for (const item of panel.items) {
     try {
       const emojiObj = client.emojis.cache.get(item.emojiId);
@@ -313,6 +309,7 @@ async function refreshReactionPanels() {
   console.log("Reaction panels refreshed ✅");
 }
 
+// ---------------- COLOUR DROPDOWNS ----------------
 function buildColourMenu(customId, roles, placeholder) {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(customId)
@@ -331,16 +328,181 @@ function buildColourMenu(customId, roles, placeholder) {
   return new ActionRowBuilder().addComponents(menu);
 }
 
+async function ensureColourMessage(channel, key, embed, row) {
+  let msg = await fetchOrNull(channel, cfg.messages?.[key]);
+
+  if (msg && msg.author?.id !== client.user.id) {
+    msg = null;
+    cfg.messages[key] = "";
+  }
+
+  if (!msg) {
+    msg = await channel.send({ embeds: [embed], components: [row] });
+    cfg.messages[key] = msg.id;
+    saveConfig(cfg);
+    console.log(`Posted ${key} -> ${msg.id}`);
+  } else {
+    await msg.edit({ embeds: [embed], components: [row] });
+    console.log(`Updated ${key}`);
+  }
+
+  return msg;
+}
+
 async function refreshColourMenus() {
   const guild = await client.guilds.fetch(cfg.guildId);
   const colourChannel = await guild.channels.fetch(cfg.colourChannelId);
   if (!safeIsTextChannel(colourChannel)) throw new Error("Colour channel invalid");
 
-  const embed = new EmbedBuilder()
+  const embed1 = new EmbedBuilder()
     .setTitle("Pick your Colour")
-    .setDescription("React to choose your colour role.\n\nUse the dropdown menus below.");
+    .setDescription("Choose your colour role from the dropdown below.\n(1/2)");
+
+  const embed2 = new EmbedBuilder()
+    .setTitle("Pick your Colour")
+    .setDescription("Choose your colour role from the dropdown below.\n(2/2)");
 
   const firstHalf = COLOUR_ROLES.slice(0, 14);
   const secondHalf = COLOUR_ROLES.slice(14);
 
-  const row1 =
+  const row1 = buildColourMenu("colour_menu_1", firstHalf, "Choose your Colour! (1/2)");
+  const row2 = buildColourMenu("colour_menu_2", secondHalf, "Choose your Colour! (2/2)");
+
+  await ensureColourMessage(colourChannel, "colourMenu1", embed1, row1);
+  await ensureColourMessage(colourChannel, "colourMenu2", embed2, row2);
+
+  saveConfig(cfg);
+  console.log("Colour menus refreshed ✅");
+}
+
+// ---------------- COMMAND: !setup ----------------
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
+  if (message.guild.id !== cfg.guildId) return;
+
+  const content = message.content.trim();
+  if (content !== "!setup" && content !== "/setup") return;
+
+  if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    return message.reply("You need Administrator to run setup.");
+  }
+
+  try {
+    await refreshReactionPanels();
+    await refreshColourMenus();
+    await message.reply("Created/updated all panels + colour menus ✅");
+  } catch (e) {
+    console.log("Setup error:", e);
+    await message.reply(`Setup failed: ${e?.message ?? e}`);
+  }
+});
+
+// ---------------- SELECT MENU HANDLER (COLOURS) ----------------
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isStringSelectMenu()) return;
+  if (interaction.customId !== "colour_menu_1" && interaction.customId !== "colour_menu_2") return;
+
+  try {
+    const guild = interaction.guild;
+    if (!guild) return;
+
+    const member = await guild.members.fetch(interaction.user.id);
+    const chosenRoleId = interaction.values?.[0];
+    if (!chosenRoleId) return;
+
+    // Remove all other colour roles first (exclusive colour)
+    const removeIds = COLOUR_ROLE_IDS.filter(id => id !== chosenRoleId);
+    for (const rid of removeIds) {
+      if (member.roles.cache.has(rid)) {
+        await member.roles.remove(rid).catch(() => {});
+      }
+    }
+
+    // Add chosen
+    if (!member.roles.cache.has(chosenRoleId)) {
+      await member.roles.add(chosenRoleId);
+    }
+
+    const chosen = COLOUR_ROLES.find(r => r.roleId === chosenRoleId);
+    await interaction.reply({
+      content: `✅ Colour set to **${chosen ? chosen.label : "selected role"}**`,
+      ephemeral: true,
+    });
+  } catch (e) {
+    console.log("Colour menu error:", e?.message ?? e);
+    if (!interaction.replied) {
+      await interaction.reply({ content: "❌ Something went wrong setting your colour.", ephemeral: true }).catch(() => {});
+    }
+  }
+});
+
+// ---------------- REACTION ROLE HANDLERS ----------------
+async function handleReactionToggle(reaction, user, adding) {
+  if (user.bot) return;
+
+  try {
+    if (reaction.partial) await reaction.fetch();
+    if (reaction.message.partial) await reaction.message.fetch();
+  } catch {
+    return;
+  }
+
+  const panel = findPanelByMessageId(reaction.message.id);
+  if (!panel) return;
+
+  const item = findItemByEmoji(panel, reaction.emoji);
+  if (!item) return;
+
+  const guild = reaction.message.guild;
+  if (!guild) return;
+
+  const member = await guild.members.fetch(user.id);
+
+  // Exclusive panels: when adding, remove other roles from that panel
+  if (adding && panel.exclusive) {
+    const otherRoleIds = panel.items
+      .map(i => i.roleId)
+      .filter(rid => rid !== item.roleId);
+
+    for (const rid of otherRoleIds) {
+      if (member.roles.cache.has(rid)) {
+        await member.roles.remove(rid).catch(() => {});
+      }
+    }
+  }
+
+  if (adding) {
+    if (!member.roles.cache.has(item.roleId)) {
+      await member.roles.add(item.roleId).catch(() => {});
+    }
+  } else {
+    if (member.roles.cache.has(item.roleId)) {
+      await member.roles.remove(item.roleId).catch(() => {});
+    }
+  }
+}
+
+client.on(Events.MessageReactionAdd, (reaction, user) => {
+  handleReactionToggle(reaction, user, true).catch(err => console.log("ReactionAdd error:", err));
+});
+
+client.on(Events.MessageReactionRemove, (reaction, user) => {
+  handleReactionToggle(reaction, user, false).catch(err => console.log("ReactionRemove error:", err));
+});
+
+// ---------------- READY ----------------
+client.once(Events.ClientReady, async () => {
+  console.log(`Logged in as ${client.user.tag}`);
+
+  // Startup refresh (won't crash the whole bot)
+  try {
+    await refreshReactionPanels();
+    await refreshColourMenus();
+  } catch (e) {
+    console.log("Startup refresh error:", e?.message ?? e);
+  }
+});
+
+// ---------------- LOGIN ----------------
+client.login(process.env.TOKEN);
