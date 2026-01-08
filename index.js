@@ -8,21 +8,10 @@ const {
   Partials,
   Events,
   PermissionsBitField,
+  EmbedBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
 } = require('discord.js');
-
-// ---------- HARD SAFETY (prevents crash loops) ----------
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Rejection:', reason);
-});
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-});
-
-// Token guard (THIS fixes your “invalid header” crash)
-if (!process.env.TOKEN || typeof process.env.TOKEN !== 'string' || process.env.TOKEN.trim().length < 20) {
-  console.error('❌ TOKEN is missing/invalid. Set TOKEN in Railway Variables (ALL CAPS).');
-  process.exit(1);
-}
 
 const CONFIG_PATH = path.join(__dirname, 'rrpanels.json');
 
@@ -30,7 +19,13 @@ const CONFIG_PATH = path.join(__dirname, 'rrpanels.json');
 function defaultConfig() {
   return {
     guildId: "1249782836982972517",
+
+    // Reaction-role panels channel
     channelId: "1250450644926464030",
+
+    // Colour roles dropdown channel
+    colorChannelId: "1272601527164600403",
+
     messages: {
       age: "1456859415843045497",
       location: "1456876189359669259",
@@ -38,7 +33,10 @@ function defaultConfig() {
       sexuality: "1456876128017977405",
       dmstatus: "1456888550288003244",
       power: "1456896005571088529",
-      pings: "" // leave blank if you haven't made it yet
+      pings: "",
+
+      // Colour dropdown panel message id (blank => bot will post it)
+      colors: ""
     }
   };
 }
@@ -85,7 +83,7 @@ const client = new Client({
 
 let cfg = loadConfig();
 
-// ---------- PANELS (AGE FIRST) ----------
+// ---------- REACTION ROLE PANELS (AGE FIRST) ----------
 const PANELS = [
   {
     key: 'age',
@@ -96,7 +94,7 @@ const PANELS = [
       { label: '18-21', roleId: '1263212381387886745', emojiId: '1263442021197287455' },
       { label: '22-25', roleId: '1263212443258323040', emojiId: '1263369965931593753' },
       { label: '26-30', roleId: '1263212568735121520', emojiId: '1263443748189110353' },
-      { label: '31+',   roleId: '1263212744812003379', emojiId: '1456838594806288394' }, // static
+      { label: '31+',   roleId: '1263212744812003379', emojiId: '1456838594806288394' },
     ],
   },
   {
@@ -125,7 +123,7 @@ const PANELS = [
       { label: 'Genderfluid', roleId: '1304973887901008035', emojiId: '1456870851898118287' },
       { label: 'Trans Man',   roleId: '1305333687172337880', emojiId: '1456870908558970931' },
       { label: 'Trans Woman', roleId: '1328635056394207284', emojiId: '1456870973705027787' },
-      { label: 'Femboy',      roleId: '1304973954389377024', emojiId: '1456824792693870718' }, // animated ok
+      { label: 'Femboy',      roleId: '1304973954389377024', emojiId: '1456824792693870718' },
     ],
   },
   {
@@ -182,18 +180,52 @@ const PANELS = [
   },
 ];
 
-// ---------- EMOJI HELPERS (fixes :emoji_123: showing) ----------
-function getEmojiMarkupById(emojiId) {
-  const e = client.emojis.cache.get(String(emojiId));
-  if (!e) return null;
-  // e.animated tells us if it is <a:...:id>
-  return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
-}
+// ---------- COLOUR ROLES (DROPDOWN) ----------
+const COLOR_PANEL = {
+  key: "colors",
+  title: "Pick your Colour",
+  description:
+    "It's a small but fun way to express yourself and stand out from the crowd.\n\n" +
+    "Just pick one of the colors below and make it your own.\n" +
+    "And remember, you can always change your color whenever you feel like it!",
+  placeholder: "Choose your Colour!",
+  exclusive: true,
+  items: [
+    { label: "Ash Veil", roleId: "1271989191772999762" },
+    { label: "Obsidian", roleId: "1271989807610069033" },
+    { label: "Cinder", roleId: "1271990032512581685" },
+    { label: "Flicker", roleId: "1271991428364370030" },
+    { label: "Hemoglobin", roleId: "1271992162816626768" },
+    { label: "Ember", roleId: "1271992592543780935" },
+    { label: "Glow", roleId: "1272002406368149524" },
+    { label: "Violet", roleId: "1272002180622057583" },
+    { label: "Rose", roleId: "1272001915378470952" },
+    { label: "Crimson", roleId: "1272001805290831902" },
+    { label: "Void", roleId: "1309198526495981580" },
+    { label: "Frost", roleId: "1272001508841623593" },
+    { label: "Sky", roleId: "1272001227051368540" },
+    { label: "Ocean", roleId: "1272001105160573001" },
+    { label: "Mint", roleId: "1272000992082264136" },
+    { label: "Lime", roleId: "1272000883621761047" },
+    { label: "Peach", roleId: "1271994645114781769" },
+    { label: "Sand", roleId: "1271994508510236723" },
+    { label: "Ivory", roleId: "1271994090153574494" },
+    { label: "Slate", roleId: "1271994238795780177" },
+    { label: "Shadow", roleId: "1271993606240206890" },
+    { label: "Ink", roleId: "1271993487591604346" },
+    { label: "Storm", roleId: "1271993365302345770" },
+    { label: "Coal", roleId: "1271993251271934022" },
+    { label: "Plasma", roleId: "1271993777158098974" },
+    { label: "Aurora", roleId: "1408855617975615631" },
+    { label: "Nebula", roleId: "1408856244378402887" },
+    { label: "Eclipse", roleId: "1408858625560154132" },
+  ]
+};
 
-// If cache misses, still show a usable placeholder in the message
+// ---------- HELPERS ----------
 function emojiToString(emojiId) {
-  const markup = getEmojiMarkupById(emojiId);
-  return markup ?? '❔';
+  const e = client.emojis.cache.get(emojiId);
+  return e ? e.toString() : '❔';
 }
 
 function panelText(panel) {
@@ -203,7 +235,7 @@ function panelText(panel) {
 
 function findPanelByMessageId(messageId) {
   for (const p of PANELS) {
-    if (cfg.messages?.[p.key] && String(cfg.messages[p.key]) === String(messageId)) return p;
+    if (cfg.messages?.[p.key] && cfg.messages[p.key] === messageId) return p;
   }
   return null;
 }
@@ -211,7 +243,7 @@ function findPanelByMessageId(messageId) {
 function findItemByEmoji(panel, reactionEmoji) {
   const emojiId = reactionEmoji?.id;
   if (!emojiId) return null;
-  return panel.items.find(i => String(i.emojiId) === String(emojiId)) || null;
+  return panel.items.find(i => i.emojiId === emojiId) || null;
 }
 
 async function ensureBotCanManage(guild) {
@@ -227,38 +259,38 @@ async function ensurePanel(channel, panel) {
   let msgId = cfg.messages?.[panel.key];
   let msg = null;
 
-  if (msgId && String(msgId).trim().length > 0) {
+  if (msgId && msgId.trim().length > 0) {
     try {
-      msg = await channel.messages.fetch(String(msgId));
+      msg = await channel.messages.fetch(msgId);
     } catch {
       msg = null;
       cfg.messages[panel.key] = "";
     }
   }
 
-  // If message exists but isn't authored by this bot, we cannot edit it
+  // If not our message, we cannot edit it -> post a new one
   if (msg && msg.author?.id !== client.user.id) {
     msg = null;
     cfg.messages[panel.key] = "";
   }
 
-  // Create or edit
   if (!msg) {
     msg = await channel.send({ content: desired });
     cfg.messages[panel.key] = msg.id;
     saveConfig(cfg);
     console.log(`Posted ${panel.key} panel -> ${msg.id}`);
-  } else if (msg.content !== desired) {
-    await msg.edit({ content: desired });
-    console.log(`Updated ${panel.key} panel`);
+  } else {
+    if (msg.content !== desired) {
+      await msg.edit({ content: desired });
+      console.log(`Updated ${panel.key} panel`);
+    }
   }
 
-  // Add reactions
+  // Add reactions (no duplicates)
   for (const item of panel.items) {
     try {
-      const emojiObj = client.emojis.cache.get(String(item.emojiId));
-      // react() accepts emoji object OR string ID for custom emoji
-      await msg.react(emojiObj ?? String(item.emojiId));
+      const emojiObj = client.emojis.cache.get(item.emojiId);
+      await msg.react(emojiObj ?? item.emojiId);
     } catch (e) {
       console.log(`Could not react with emoji ${item.emojiId} for ${panel.key}:`, e?.message ?? e);
     }
@@ -267,16 +299,73 @@ async function ensurePanel(channel, panel) {
   return msg;
 }
 
+// ---------- COLOUR PANEL HELPERS ----------
+function buildColorEmbed() {
+  return new EmbedBuilder()
+    .setTitle(COLOR_PANEL.title)
+    .setDescription(COLOR_PANEL.description)
+    .setColor(0xb84cff);
+}
+
+function buildColorMenu() {
+  return new StringSelectMenuBuilder()
+    .setCustomId('color_roles_select')
+    .setPlaceholder(COLOR_PANEL.placeholder)
+    .setMinValues(1)
+    .setMaxValues(1)
+    .addOptions(
+      COLOR_PANEL.items.map(c => ({
+        label: c.label,
+        value: c.roleId,
+      }))
+    );
+}
+
+async function ensureColorPanel(guild) {
+  const channel = await guild.channels.fetch(cfg.colorChannelId);
+  if (!channel || !channel.isTextBased()) throw new Error('Color channelId is not a text channel.');
+
+  let msg = null;
+  const msgId = cfg.messages.colors;
+
+  if (msgId && msgId.trim().length > 0) {
+    try { msg = await channel.messages.fetch(msgId); } catch { msg = null; }
+  }
+
+  const payload = {
+    embeds: [buildColorEmbed()],
+    components: [new ActionRowBuilder().addComponents(buildColorMenu())],
+  };
+
+  if (!msg) {
+    msg = await channel.send(payload);
+    cfg.messages.colors = msg.id;
+    saveConfig(cfg);
+    console.log(`Posted colors panel -> ${msg.id}`);
+  } else {
+    await msg.edit(payload);
+    console.log('Updated colors panel');
+  }
+}
+
+// ---------- REFRESH ALL PANELS ----------
 async function refreshAllPanels() {
   const guild = await client.guilds.fetch(cfg.guildId);
+
+  // Ensures custom emoji are cached before we render text/react
+  await guild.emojis.fetch().catch(() => {});
+
   await ensureBotCanManage(guild);
 
-  const channel = await guild.channels.fetch(cfg.channelId);
-  if (!channel || !channel.isTextBased()) throw new Error('Configured channelId is not a text channel.');
+  const rrChannel = await guild.channels.fetch(cfg.channelId);
+  if (!rrChannel || !rrChannel.isTextBased()) throw new Error('Configured channelId is not a text channel.');
 
   for (const panel of PANELS) {
-    await ensurePanel(channel, panel);
+    await ensurePanel(rrChannel, panel);
   }
+
+  // Separate channel: colour dropdown
+  await ensureColorPanel(guild);
 
   saveConfig(cfg);
   console.log('Panels refreshed ✅');
@@ -325,7 +414,7 @@ async function handleReactionToggle(reaction, user, adding) {
 
   const member = await guild.members.fetch(user.id);
 
-  // Exclusive: remove other roles in that panel
+  // Exclusive: remove others in same panel when adding
   if (adding && panel.exclusive) {
     const otherRoleIds = panel.items.map(i => i.roleId).filter(rid => rid !== item.roleId);
     for (const rid of otherRoleIds) {
@@ -338,12 +427,10 @@ async function handleReactionToggle(reaction, user, adding) {
   if (adding) {
     if (!member.roles.cache.has(item.roleId)) {
       await member.roles.add(item.roleId).catch(() => {});
-      console.log(`+ ${user.tag} -> ${item.label}`);
     }
   } else {
     if (member.roles.cache.has(item.roleId)) {
       await member.roles.remove(item.roleId).catch(() => {});
-      console.log(`- ${user.tag} -> ${item.label}`);
     }
   }
 }
@@ -356,6 +443,32 @@ client.on(Events.MessageReactionRemove, (reaction, user) => {
   handleReactionToggle(reaction, user, false).catch(err => console.log('ReactionRemove error:', err));
 });
 
+// ---------- COLOUR DROPDOWN HANDLER ----------
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isStringSelectMenu()) return;
+  if (interaction.customId !== 'color_roles_select') return;
+
+  const member = await interaction.guild.members.fetch(interaction.user.id);
+  const selectedRoleId = interaction.values[0];
+
+  // Remove all other colour roles
+  for (const c of COLOR_PANEL.items) {
+    if (c.roleId !== selectedRoleId && member.roles.cache.has(c.roleId)) {
+      await member.roles.remove(c.roleId).catch(() => {});
+    }
+  }
+
+  // Toggle selected role
+  if (member.roles.cache.has(selectedRoleId)) {
+    await member.roles.remove(selectedRoleId).catch(() => {});
+    await interaction.reply({ content: 'Colour removed ✅', ephemeral: true });
+  } else {
+    await member.roles.add(selectedRoleId).catch(() => {});
+    const name = COLOR_PANEL.items.find(x => x.roleId === selectedRoleId)?.label ?? 'that colour';
+    await interaction.reply({ content: `Colour set to **${name}** 🎨`, ephemeral: true });
+  }
+});
+
 // ---------- READY ----------
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -366,7 +479,4 @@ client.once(Events.ClientReady, async () => {
   }
 });
 
-client.login(process.env.TOKEN.trim());
-
-
-
+client.login(process.env.TOKEN);
