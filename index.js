@@ -524,3 +524,4 @@ client.on("error", (err) => console.log("Client error:", err?.message ?? err));
 process.on("unhandledRejection", (err) => console.log("UnhandledRejection:", err?.message ?? err));
 
 client.login(process.env.TOKEN);
+
